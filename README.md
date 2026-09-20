@@ -2,7 +2,9 @@
 
 在浏览器之外添加并激活 DSH Web 工作区：可以来自命令行，也可以来自 Windows 资源管理器的右键菜单。
 
-这里不修改 DeepSeek Harness 源码树。整个功能只是用户补丁层里的一行，加上这个目录：
+[中文](README.md) | [English](README.en.md)
+
+这里不修改 DeepSeek Harness 源码树。整个功能就是这个包：一个宿主半侧、一个浏览器半侧、一个 CLI 和一个焦点助手。
 
 | 文件 | 作用 |
 |---|---|
@@ -10,36 +12,62 @@
 | `lib/client.js` | 浏览器半侧：轮询激活，打开工作区 |
 | `cli.mjs` | `dsh-open`：找到或启动一个实例，然后调用宿主半侧 |
 | `focus-window.ps1` | Windows：把显示 Web GUI 的浏览器窗口提到前台，或新开一个页签 |
-| `dsh-open.cmd` | CLI 的 Windows 包装 |
+| `dsh-open.cmd` | `dsh-open` 的 Windows 包装 |
+| `cordis.patch.yml` | 本包的 bundle 补丁：挂载两半的那一行 |
+| `install.ps1` | 离线安装：建链接 + 写加载行（`-Remove` 卸载） |
 | `install-context-menu.ps1` | 添加/移除资源管理器右键项（仅 HKCU） |
-| `cordis.patch.example.yml` | 需要追加到你的 profile 的补丁行 |
 
 ## 安装
 
-1. 把这个目录放在 harness 检出之外，例如 `%USERPROFILE%\.dsh\plugins\dsh-open-workspace\`。
+前提：Node ≥ 22，以及可用的 dsh CLI（下面统一用 `npx -y @deepseek-ai/dsh` 调用；`dsh` 已经在 `PATH` 上时可以把它换成 `dsh`）。焦点提升只在 Windows 有效，其他平台照常可用，只是不去提升窗口。
 
-2. 让这个目录能以包名 `dsh-open-workspace` 被解析，然后把 `cordis.patch.example.yml` 里的那一行追加到你的 profile 补丁层（`$DSH_HOME/profiles/web/cordis.patch.yml`，初始内容是 `[]`）。两种做法任选其一——装成 profile 依赖：
+### 方式一：从 GitHub 安装（推荐）
 
-   ```powershell
-   npx -y @deepseek-ai/dsh plugin --profile web add "link:$env:USERPROFILE\.dsh\plugins\dsh-open-workspace"
-   ```
+```sh
+npx -y @deepseek-ai/dsh plugin --profile web add github:Gemini2015/dsh-open-workspace
+```
 
-   或者自己把它链接进安装回退目录（不需要管理员权限）：
+包内自带 `cordis.patch.yml`，并在 `package.json` 里声明了 `dsh.bundle.patch`，所以 profile 会**自动把它挂成一层**——不需要手改任何补丁文件。它没有 `prepare` 构建脚本（纯 JS，装完即用），也没有任何依赖，因此不需要 pnpm ≥10 的 `allowBuilds` 批准。建议按官方做法钉住提交：`github:Gemini2015/dsh-open-workspace#<commit-sha>`。
 
-   ```powershell
-   New-Item -ItemType Junction -Force -Target "$env:USERPROFILE\.dsh\plugins\dsh-open-workspace" `
-     -Path "$env:USERPROFILE\.dsh\profiles\node_modules\dsh-open-workspace"
-   ```
+### 方式二：从本地目录安装（开发）
 
-   两种做法都让 `node_modules/dsh-open-workspace` 成为指向插件目录的链接，因此改动直接生效，不需要重新安装；重跑链接命令用 `-Force`，它会替换已有链接（包括指向旧位置的）。要写成 `link:` 而不是 `file:`：`file:` 会把包复制进 pnpm 的虚拟 store，此后再编辑这个目录就不影响已安装的那一份。`dsh` 已经在 `PATH` 上时，第一条命令里的 `npx -y @deepseek-ai/dsh` 可以直接写成 `dsh`。
+```sh
+git clone https://github.com/Gemini2015/dsh-open-workspace C:\dev\dsh-open-workspace
+cd C:\dev\dsh-open-workspace
+npx -y @deepseek-ai/dsh plugin --profile web add .
+```
 
-   补丁行里要写**包名**而不是路径：插件页用模块短名做每一行的标题，写路径就会把路径原样当成标题。web profile 的补丁层是实时重载的，所以正在运行的 `dsh web` 不需要重启就能挂上这一行。
+本地目录是**链接**安装：改完源码直接生效，不用重新安装（重启 `dsh web` 让宿主半侧换新）。本包没有依赖，所以不需要先跑 `pnpm install`。
 
-3. 可选：把这个目录本身加进 `PATH`，这样任意 shell 里都能直接用 `dsh-open`。注意 `dsh-open.cmd` 是用 `%~dp0cli.mjs` 调用同目录的 CLI 的，所以它不能单独复制到别处——要在别处放一个入口，就让那个入口指向本目录里的绝对路径。
+### 方式三：离线压缩包（不需要 pnpm，也不需要联网）
 
-4. 可选，Windows 资源管理器：`powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.dsh\plugins\dsh-open-workspace\install-context-menu.ps1"`
+把目录解压到任意位置（例如 `C:\dev\dsh-open-workspace`），然后：
 
-用 `dsh-open --status` 验证（有实例在运行时退出码 0 并打印一行），或用 `dsh-open --no-start .`（补丁行缺失时会明确报错）；还没把这个目录加进 `PATH` 时，用 `.\dsh-open.cmd --status`。
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\dev\dsh-open-workspace\install.ps1
+```
+
+脚本做两件事：在 `$DSH_HOME\profiles\node_modules` 下建一个指向该目录的链接，并把加载行写进 `$DSH_HOME\profiles\web\cordis.patch.yml`。两者都幂等，修改用户文件前会先备份；不需要管理员权限。`-ContextMenu` 顺带装资源管理器右键项，`-Remove` 卸载。
+
+> 三种方式**只选一条**。方式一和方式二由 bundle 自动挂载加载行，方式三写的是用户补丁层；两条同时存在会插入重复的插件 id。
+
+### 验证
+
+```sh
+npx -y @deepseek-ai/dsh --profile web --dump-config   # 组合树里应出现 dsh-open-workspace
+```
+
+或者 `dsh-open --status`：有实例在运行时退出码 0 并打印一行（还没把目录加进 `PATH` 时用 `.\dsh-open.cmd --status`）。
+
+### 可选：命令行与右键菜单
+
+把插件目录加进 `PATH`，任意 shell 里就能直接用 `dsh-open`。`dsh-open.cmd` 用 `%~dp0cli.mjs` 调用同目录的 CLI，所以它不能单独复制到别处——要在别处放一个入口，就让那个入口指向本目录里的绝对路径。
+
+Windows 资源管理器右键项：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File C:\dev\dsh-open-workspace\install-context-menu.ps1
+```
 
 ## 使用
 
@@ -91,6 +119,13 @@ dsh-open --focus tab .        # 总是新开页签，不去提升已有窗口
 - 令牌保存在 `$DSH_HOME/open-workspace.json`，以 `0600` 写入，插件卸载时删除；
 - 令牌还会作为 `__DSH_OPEN_WORKSPACE__` 注入到所服务的索引里，因此任何已经能在 GUI 里执行脚本的页面都能读到它。这不是新的权限，但它正是这个端点还要拒绝非回环对端、而不只依赖令牌的原因。
 
+## 疑难
+
+- **`dsh-open` 拒绝启动服务器，说端口已经有人应答。** 这是故意的：往活着的端口上再起一个 `dsh web` 绑不上端口，只会留下一个指向从未监听的进程的会合文件。按提示重启那个服务器，或删掉陈旧的 `$DSH_HOME/open-workspace.json` 再试；确实知道自己在做什么时用 `--launch` 跳过这项检查。
+- **新开的页签一直转圈、刷新也转圈，但服务器明明在跑。** 浏览器对同一个源只给六条并发 HTTP/1.1 连接，而 GUI 每个页签都要长期占用一条热重载连接；页签足够多就把配额用光，此后任何新请求都排不上队（服务器本身对所有探针照常应答）。关掉多余页签即可；插件自己已经不占用连接。
+- **右键之后窗口没到前台。** 在资源管理器右键菜单之后这是常态：Windows 前台锁不允许这个进程抢焦点。助手会改为把窗口抬到 Z 序最前（日志里是 `could not take focus; brought it to the front`），并且不会为此新开页签。
+- **从 GitHub 安装报 `UNABLE_TO_VERIFY_LEAF_SIGNATURE`。** 那是 git/curl 校验 GitHub 证书链失败（系统时钟不对、git 用了 OpenSSL 后端而 CA 不全、或有代理拦截 TLS），与插件无关。可以先试 `git config --global http.sslBackend schannel`；跳不过去就改用方式二（本地 clone）、方式三（解压后跑脚本），或打上 tag 之后用 tarball 安装（见"开发与发布"）。
+
 ## 已知限制
 
 - 最后一跳——`openWorkspace` 真正切换可见页签——属于 harness 的导航代码，需要真实浏览器才能观察。
@@ -101,3 +136,14 @@ dsh-open --focus tab .        # 总是新开页签，不去提升已有窗口
 - 焦点功能仅限 Windows。其他平台上 CLI 用 `open` 或 `xdg-open` 打开 URL，由它们自己把浏览器调起来。
 - 每个 `$DSH_HOME` 只有一个会合文件：同一个 home 下不同端口上的多个实例，最后启动的那个拥有发现权。
 - 这个插件面向的是 pre-stable 阶段的 harness API（`webServer.register`、`workspaceRegistry.create`、`uiWorkspace.openWorkspace`、`webserver/index-inject`）。harness 升级后这里可能需要跟着改；CLI 会明确失败，而不是悄悄降级。
+
+## 开发与发布
+
+- 本地开发：`git clone https://github.com/Gemini2015/dsh-open-workspace C:\dev\dsh-open-workspace`，再 `npx -y @deepseek-ai/dsh plugin --profile web add C:\dev\dsh-open-workspace`。链接安装，改完源码重启 `dsh web` 即生效。
+- 仓库结构：`host.mjs` 与 `lib/client.js` 是插件的两半，`cordis.patch.yml` 是挂载它们的 bundle 补丁，`cli.mjs` + `focus-window.ps1` + `dsh-open.cmd` 是浏览器之外的入口，`install.ps1` 是离线安装。
+- 发布：推上 GitHub 后给仓库加上 `dsh-plugin` 话题（便于被发现），然后打 tag：`git tag v0.1.0 && git push origin v0.1.0`。有了 tag，既能用上面"钉住提交"的写法，也能用 tarball 安装：`npx -y @deepseek-ai/dsh plugin --profile web add https://github.com/Gemini2015/dsh-open-workspace/archive/refs/tags/v0.1.0.tar.gz`。
+- 可选：`npm publish` 之后，别人可以直接 `dsh plugin --profile web add dsh-open-workspace`。
+
+## 许可
+
+[MIT](LICENSE)

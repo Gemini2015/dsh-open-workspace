@@ -1,4 +1,4 @@
-# Put the browser in front of the user after a workspace was opened.
+﻿# Put the browser in front of the user after a workspace was opened.
 #
 # A page cannot do this itself: browsers refuse cross-application focus, so
 # window.focus() in the GUI can never raise its own browser window. The
