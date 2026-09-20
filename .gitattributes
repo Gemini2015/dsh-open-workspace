@@ -1,0 +1,3 @@
+# One line ending everywhere, including the Windows scripts: dsh-open.cmd is a
+# plain sequence with no labels or goto, which is what cmd.exe needs CRLF for.
+* text=auto eol=lf

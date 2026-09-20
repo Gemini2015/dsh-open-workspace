@@ -1,0 +1,16 @@
+# The rendezvous file the running plugin writes carries this process's bearer
+# token. It lives in $DSH_HOME, never here; this pattern keeps a copy that was
+# made for debugging out of the repository.
+open-workspace.json
+dsh-open-*.log
+
+node_modules/
+*.bak
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+# Credential carriers that must never enter the tree.
+.env
+.env.*
+.credentials.yaml

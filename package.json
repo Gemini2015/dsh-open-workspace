@@ -1,0 +1,22 @@
+{
+  "name": "dsh-open-workspace",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "description": "Register and activate a DSH Web workspace from outside the browser.",
+  "bin": {
+    "dsh-open": "./cli.mjs"
+  },
+  "exports": {
+    ".": "./host.mjs",
+    "./client": "./lib/client.js"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web"
+    }
+  }
+}
