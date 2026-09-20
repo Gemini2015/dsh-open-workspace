@@ -1,0 +1,7 @@
+# The dsh-open-workspace bundle patch: one row mounting both halves of this
+# package. A profile that lists this bundle — `dsh plugin --profile web add`
+# does that automatically, because package.json declares `dsh.bundle.patch` —
+# applies this file as a layer, so no patch layer has to be edited by hand.
+- insert:
+    - id: dsh-open-workspace
+      name: dsh-open-workspace

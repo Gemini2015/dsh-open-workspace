@@ -1,20 +1,52 @@
 {
   "name": "dsh-open-workspace",
   "version": "0.1.0",
-  "private": true,
+  "description": "DeepSeek Harness plugin: register and activate a Web workspace from outside the browser, from a shell or the Windows Explorer context menu.",
   "type": "module",
+  "main": "./host.mjs",
   "engines": {
     "node": ">=22"
   },
-  "description": "Register and activate a DSH Web workspace from outside the browser.",
   "bin": {
     "dsh-open": "./cli.mjs"
   },
   "exports": {
     ".": "./host.mjs",
-    "./client": "./lib/client.js"
+    "./client": "./lib/client.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "host.mjs",
+    "cli.mjs",
+    "lib/client.js",
+    "focus-window.ps1",
+    "dsh-open.cmd",
+    "install.ps1",
+    "install-context-menu.ps1",
+    "cordis.patch.yml",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "cordis",
+    "workspace",
+    "web",
+    "explorer"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gemini2015/dsh-open-workspace.git"
   },
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web"
     }

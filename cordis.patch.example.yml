@@ -1,8 +1,0 @@
-# Row to append to $DSH_HOME/profiles/web/cordis.patch.yml (a top-level YAML
-# array). `dsh-open-workspace` is the package name: step 2 of README.md makes
-# this directory resolvable under it. A file path works as well, but the plugin
-# page titles each row with the module name, so a path shows up there as the
-# path instead of the plugin.
-- insert:
-    - id: dsh-open-workspace
-      name: 'dsh-open-workspace'
