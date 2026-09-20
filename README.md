@@ -20,24 +20,26 @@
 
 2. 让这个目录能以包名 `dsh-open-workspace` 被解析，然后把 `cordis.patch.example.yml` 里的那一行追加到你的 profile 补丁层（`$DSH_HOME/profiles/web/cordis.patch.yml`，初始内容是 `[]`）。两种做法任选其一——装成 profile 依赖：
 
-   ```sh
-   npx -y @deepseek-ai/dsh plugin --profile web add "link:%USERPROFILE%\.dsh\plugins\dsh-open-workspace"
+   ```powershell
+   npx -y @deepseek-ai/dsh plugin --profile web add "link:$env:USERPROFILE\.dsh\plugins\dsh-open-workspace"
    ```
 
-   或者自己把它链接进安装回退目录：
+   或者自己把它链接进安装回退目录（不需要管理员权限）：
 
    ```powershell
-   New-Item -ItemType Junction -Target "$env:USERPROFILE\.dsh\plugins\dsh-open-workspace" `
+   New-Item -ItemType Junction -Force -Target "$env:USERPROFILE\.dsh\plugins\dsh-open-workspace" `
      -Path "$env:USERPROFILE\.dsh\profiles\node_modules\dsh-open-workspace"
    ```
 
-   这一行要写**包名**而不是路径：插件页用模块短名做每一行的标题，写路径就会把路径原样当成标题。web profile 的补丁层是实时重载的，所以正在运行的 `dsh web` 不需要重启就能挂上这一行。
+   两种做法都让 `node_modules/dsh-open-workspace` 成为指向插件目录的链接，因此改动直接生效，不需要重新安装；重跑链接命令用 `-Force`，它会替换已有链接（包括指向旧位置的）。要写成 `link:` 而不是 `file:`：`file:` 会把包复制进 pnpm 的虚拟 store，此后再编辑这个目录就不影响已安装的那一份。`dsh` 已经在 `PATH` 上时，第一条命令里的 `npx -y @deepseek-ai/dsh` 可以直接写成 `dsh`。
 
-3. 可选：把这个目录加进 `PATH`，或把 `dsh-open.cmd` 复制到 `PATH` 上的某个位置，这样任意 shell 里都能直接用 `dsh-open`。
+   补丁行里要写**包名**而不是路径：插件页用模块短名做每一行的标题，写路径就会把路径原样当成标题。web profile 的补丁层是实时重载的，所以正在运行的 `dsh web` 不需要重启就能挂上这一行。
 
-4. 可选，Windows 资源管理器：`powershell -ExecutionPolicy Bypass -File install-context-menu.ps1`
+3. 可选：把这个目录本身加进 `PATH`，这样任意 shell 里都能直接用 `dsh-open`。注意 `dsh-open.cmd` 是用 `%~dp0cli.mjs` 调用同目录的 CLI 的，所以它不能单独复制到别处——要在别处放一个入口，就让那个入口指向本目录里的绝对路径。
 
-用 `dsh-open --status` 验证（有实例在运行时退出码 0 并打印一行），或用 `dsh-open --no-start .`（补丁行缺失时会明确报错）。
+4. 可选，Windows 资源管理器：`powershell -ExecutionPolicy Bypass -File "$env:USERPROFILE\.dsh\plugins\dsh-open-workspace\install-context-menu.ps1"`
+
+用 `dsh-open --status` 验证（有实例在运行时退出码 0 并打印一行），或用 `dsh-open --no-start .`（补丁行缺失时会明确报错）；还没把这个目录加进 `PATH` 时，用 `.\dsh-open.cmd --status`。
 
 ## 使用
 
